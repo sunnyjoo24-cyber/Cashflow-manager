@@ -1,21 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUser(data.user)
+    })
+  }, [])
 
   const login = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password
     })
 
     if (error) setMessage(error.message)
-    else setMessage('Login successful!')
+    else {
+      setUser(data.user)
+      setMessage('Login successful!')
+    }
+  }
+
+  const logout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setMessage('Logged out')
+  }
+
+  if (user) {
+    return (
+      <div style={{ padding: 40 }}>
+        <h1>CashFlow Manager</h1>
+        <p>Welcome, {user.email}</p>
+
+        <button onClick={logout}>Logout</button>
+
+        <hr />
+
+        <h2>Dashboard (Coming soon)</h2>
+        <p>Next step: Daily Cash Count, Till, Booking, Refund</p>
+      </div>
+    )
   }
 
   return (
